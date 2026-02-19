@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+popup/popup.js
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+*.log
+.idea/
+.vscode/
+
+# Env (if you add later)
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage/
+
+# Large saved HTML (keep locally; use trimmed fixture in tests/fixtures for CI)
+*- Google Search.html
+
+# Local scratch / export sample (e.g. pasted export for inspection)
+test.md

@@ -1,0 +1,57 @@
+{
+  "name": "google-ai-to-markdown",
+  "version": "1.0.0",
+  "description": "Chrome extension: export Google AI conversation to Markdown",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/sync-version.js && esbuild content/content.ts --bundle --outfile=dist/content.js && esbuild popup/popup.ts --bundle --outfile=popup/popup.js",
+    "ci": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "icons:generate": "node scripts/generate-icons.js",
+    "prepack": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@semantic-release/git": "^10.0.1",
+    "@types/chrome": "^0.0.268",
+    "@types/jsdom": "^27.0.0",
+    "@types/turndown": "^5.0.6",
+    "esbuild": "^0.24.0",
+    "eslint": "^10.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.3.0",
+    "jsdom": "^28.1.0",
+    "prettier": "^3.8.1",
+    "semantic-release": "^24.2.9",
+    "sharp": "^0.33.5",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.56.0",
+    "vitest": "^4.0.18"
+  },
+  "dependencies": {
+    "turndown": "^7.2.0"
+  },
+  "release": {
+    "branches": [
+      "main",
+      "master"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/npm",
+      [
+        "@semantic-release/git",
+        {
+          "message": "chore(release): ${nextRelease.version} [skip ci]"
+        }
+      ]
+    ]
+  }
+}

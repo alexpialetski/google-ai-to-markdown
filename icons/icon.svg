@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Document -->
+  <rect x="24" y="14" width="80" height="100" rx="8" fill="#1a73e8"/>
+  <path d="M24 14 L24 42 L52 14 Z" fill="#1557b0"/>
+  <!-- M for Markdown (thick stroke, reads at 16px) -->
+  <path d="M44 88 L44 50 L64 72 L84 50 L84 88" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Export arrow -->
+  <path d="M64 100 L54 116 L74 116 Z" fill="white" opacity="0.9"/>
+</svg>
