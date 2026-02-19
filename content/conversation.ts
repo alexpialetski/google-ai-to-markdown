@@ -25,6 +25,8 @@ export function cleanForMarkdown(root: Element | null): Element | null {
       '.VlQBpc',
       // "Creating a public link…" status text
       '.zg2IJb',
+      // "Use code with caution." disclaimer under code blocks
+      '.P8PNlb',
     ].join(',')
   );
   remove.forEach((el) => el.remove());
@@ -41,6 +43,28 @@ export function cleanForMarkdown(root: Element | null): Element | null {
 }
 
 /**
+ * Replace Google AI code blocks (.r1PmQe with .z0e9Qd + .pCTyYe) with a single
+ * <pre><code data-language="..."> so Turndown outputs ```lang\ncode\n```.
+ */
+function normalizeCodeBlocks(root: Element): void {
+  const doc = root.ownerDocument;
+  root.querySelectorAll('.r1PmQe').forEach((block) => {
+    const langEl =
+      block.querySelector('.z0e9Qd .vVRw1d') ?? block.querySelector('.z0e9Qd');
+    const codeEl = block.querySelector('.pCTyYe pre code');
+    if (!codeEl || !langEl) return;
+    const lang = (langEl.textContent ?? '').trim();
+    const code = (codeEl.textContent ?? '').trim();
+    const pre = doc.createElement('pre');
+    const codeNode = doc.createElement('code');
+    codeNode.setAttribute('data-language', lang);
+    codeNode.textContent = code;
+    pre.appendChild(codeNode);
+    block.parentNode?.replaceChild(pre, block);
+  });
+}
+
+/**
  * Build Turndown with rules that suit Google AI DOM:
  * - User query as heading
  * - Section headings (otQkpb) as ###
@@ -51,6 +75,27 @@ export function createTurndown(): TurndownService {
     headingStyle: 'atx',
     codeBlockStyle: 'fenced',
   });
+
+  // Fenced code with language (from normalized .r1PmQe blocks); run before default pre rule
+  // priority is supported at runtime by Turndown but not in @types/turndown
+  td.addRule('codeBlockWithLanguage', {
+    filter: (node: HTMLElement) => {
+      if (node.nodeName !== 'PRE') return false;
+      const code = node.firstElementChild;
+      return (
+        code?.nodeName === 'CODE' &&
+        code.getAttribute('data-language') != null
+      );
+    },
+    replacement: (content: string, node: HTMLElement) => {
+      const code = node.querySelector('code[data-language]');
+      if (!code) return content;
+      const lang = code.getAttribute('data-language') ?? '';
+      const codeText = (code.textContent ?? '').trim();
+      return '\n\n```' + lang + '\n' + codeText + '\n```\n\n';
+    },
+    priority: 100,
+  } as TurndownService.Rule & { priority?: number });
 
   // Remove citation/link buttons that might remain
   td.addRule('stripCitationButtons', {
@@ -83,6 +128,7 @@ const UI_ARTIFACT_LINES = new Set([
   'Creating a public link…',
   'Good response',
   'Bad response',
+  'Use code with caution.',
 ]);
 
 export function stripUiArtifacts(md: string): string {
@@ -111,6 +157,8 @@ export function toMarkdown(root: Element): string {
   const clean = cleanForMarkdown(root);
   if (!clean) return '';
 
+  normalizeCodeBlocks(clean);
+
   const userQuery = getUserQuery(root);
   const td = createTurndown();
 
@@ -124,10 +172,12 @@ export function toMarkdown(root: Element): string {
   // Strip recurring Google AI UI lines that may slip through (feedback, link status)
   bodyMd = stripUiArtifacts(bodyMd);
 
+  if (!userQuery.trim() && !bodyMd.trim()) return '';
+
   const parts: string[] = [];
-  if (userQuery) {
-    parts.push('## ' + userQuery + '\n\n');
+  if (userQuery.trim()) {
+    parts.push('### User\n\n' + userQuery.trim() + '\n\n');
   }
-  parts.push(bodyMd);
+  parts.push('### Assistant\n\n' + bodyMd);
   return parts.join('');
 }
