@@ -1,6 +1,6 @@
 {
   "name": "google-ai-to-markdown",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Chrome extension: export Google AI conversation to Markdown",
   "private": true,
   "scripts": {
