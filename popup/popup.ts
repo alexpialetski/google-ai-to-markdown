@@ -4,6 +4,7 @@ const statusEl = document.getElementById('status') as HTMLParagraphElement;
 const outEl = document.getElementById('out') as HTMLDivElement;
 const mdEl = document.getElementById('md') as HTMLTextAreaElement;
 const exportBtn = document.getElementById('export') as HTMLButtonElement;
+const exportLastBtn = document.getElementById('export-last') as HTMLButtonElement;
 const copyBtn = document.getElementById('copy') as HTMLButtonElement;
 const downloadBtn = document.getElementById('download') as HTMLButtonElement;
 
@@ -35,8 +36,9 @@ function sanitizeFilename(name: string, maxLength = 100): string {
   return sanitized;
 }
 
-exportBtn.addEventListener('click', async () => {
+async function doExport(messageType: string): Promise<void> {
   exportBtn.disabled = true;
+  exportLastBtn.disabled = true;
   setStatus('Exporting…');
   outEl.classList.remove('show');
   try {
@@ -49,7 +51,7 @@ exportBtn.addEventListener('click', async () => {
       return;
     }
     const response = (await chrome.tabs.sendMessage(tab.id, {
-      type: 'EXPORT_TO_MARKDOWN',
+      type: messageType,
     })) as ExportResponse | undefined;
     if (response && 'error' in response) {
       setStatus(response.error, true);
@@ -75,8 +77,12 @@ exportBtn.addEventListener('click', async () => {
     }
   } finally {
     exportBtn.disabled = false;
+    exportLastBtn.disabled = false;
   }
-});
+}
+
+exportBtn.addEventListener('click', () => doExport('EXPORT_TO_MARKDOWN'));
+exportLastBtn.addEventListener('click', () => doExport('EXPORT_LAST_TO_MARKDOWN'));
 
 copyBtn.addEventListener('click', () => {
   const text = mdEl.value;

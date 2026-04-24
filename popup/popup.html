@@ -91,7 +91,8 @@
       #export:hover {
         background: var(--primary-hover);
       }
-      #export:disabled {
+      #export:disabled,
+      #export-last:disabled {
         opacity: 0.7;
         cursor: not-allowed;
       }
@@ -151,6 +152,7 @@
     </p>
     <div class="export-wrap">
       <button id="export" type="button">Export conversation to Markdown</button>
+      <button id="export-last" class="secondary" type="button">Export last response only</button>
     </div>
     <div id="out">
       <div class="result-box">
