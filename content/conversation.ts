@@ -27,6 +27,10 @@ export function cleanForMarkdown(root: Element | null): Element | null {
       '.zg2IJb',
       // "Use code with caution." disclaimer under code blocks
       '.P8PNlb',
+      // "AI responses may include mistakes" disclaimer
+      '.v4bSkd',
+      // Footer container (disclaimer + Copy/More buttons)
+      '.DBd2Wb',
     ].join(',')
   );
   remove.forEach((el) => el.remove());
@@ -83,8 +87,7 @@ export function createTurndown(): TurndownService {
       if (node.nodeName !== 'PRE') return false;
       const code = node.firstElementChild;
       return (
-        code?.nodeName === 'CODE' &&
-        code.getAttribute('data-language') != null
+        code?.nodeName === 'CODE' && code.getAttribute('data-language') != null
       );
     },
     replacement: (content: string, node: HTMLElement) => {
@@ -131,10 +134,17 @@ const UI_ARTIFACT_LINES = new Set([
   'Use code with caution.',
 ]);
 
+const UI_ARTIFACT_PREFIXES = ['AI responses may include mistakes'];
+
 export function stripUiArtifacts(md: string): string {
   return md
     .split('\n')
-    .filter((line) => !UI_ARTIFACT_LINES.has(line.trim()))
+    .filter((line) => {
+      const t = line.trim();
+      if (UI_ARTIFACT_LINES.has(t)) return false;
+      if (UI_ARTIFACT_PREFIXES.some((p) => t.startsWith(p))) return false;
+      return true;
+    })
     .join('\n');
 }
 
@@ -180,4 +190,34 @@ export function toMarkdown(root: Element): string {
   }
   parts.push('### Assistant\n\n' + bodyMd);
   return parts.join('');
+}
+
+/**
+ * Convert conversation root to markdown, returning only the assistant body.
+ */
+export function toMarkdownAssistantOnly(root: Element): string {
+  const clean = cleanForMarkdown(root);
+  if (!clean) return '';
+
+  normalizeCodeBlocks(clean);
+
+  // Remove the user query heading so only the assistant response remains
+  const queryEl = clean.querySelector(
+    '.VndcI.veK2kb, .sUKAcb span[role="heading"], [aria-level="2"], .ilZyRc .sUKAcb'
+  );
+  if (queryEl?.closest('.ilZyRc, .sUKAcb, [aria-level="2"]')) {
+    queryEl.remove();
+  } else if (queryEl) {
+    queryEl.remove();
+  }
+
+  const td = createTurndown();
+  const mainCol =
+    clean.querySelector('[data-container-id="main-col"]') ?? clean;
+  let bodyMd = td.turndown(mainCol as HTMLElement);
+
+  bodyMd = bodyMd.replace(/\n{3,}/g, '\n\n').replace(/^\s+|\s+$/g, '');
+  bodyMd = stripUiArtifacts(bodyMd);
+
+  return bodyMd.trim() ? '### Assistant\n\n' + bodyMd : '';
 }

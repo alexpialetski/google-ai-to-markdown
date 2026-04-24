@@ -6,6 +6,7 @@ import {
   cleanForMarkdown,
   getUserQuery,
   toMarkdown,
+  toMarkdownAssistantOnly,
   stripUiArtifacts,
 } from '../content/conversation';
 
@@ -18,7 +19,7 @@ function parseHtml(html: string): Element {
 }
 
 describe('stripUiArtifacts', () => {
-  it('removes Good/Bad response, Creating a public link, and Use code with caution lines', () => {
+  it('removes Good/Bad response, Creating a public link, Use code with caution, and AI disclaimer lines', () => {
     const md = [
       'Some content.',
       'Good response',
@@ -26,10 +27,21 @@ describe('stripUiArtifacts', () => {
       'Bad response',
       'Creating a public link…',
       'Use code with caution.',
+      'AI responses may include mistakes.',
       'End.',
     ].join('\n');
     const out = stripUiArtifacts(md);
     expect(out).toBe('Some content.\nMore content.\nEnd.');
+  });
+
+  it('removes AI disclaimer line with Learn more link', () => {
+    const md = [
+      'Some content.',
+      'AI responses may include mistakes. [Learn more](https://support.google.com/websearch?p=aimode)',
+      'End.',
+    ].join('\n');
+    const out = stripUiArtifacts(md);
+    expect(out).toBe('Some content.\nEnd.');
   });
 
   it('leaves other lines unchanged', () => {
@@ -79,6 +91,25 @@ describe('cleanForMarkdown', () => {
     expect(cleaned).not.toBeNull();
     expect(cleaned!.querySelector('.P8PNlb')).toBeNull();
     expect(cleaned!.querySelector('p')?.textContent).toBe('Code below.');
+  });
+
+  it('removes .v4bSkd (AI responses disclaimer)', () => {
+    const root = parseHtml(
+      '<div><p>Content.</p><div class="v4bSkd">AI responses may include mistakes.</div></div>'
+    );
+    const cleaned = cleanForMarkdown(root);
+    expect(cleaned).not.toBeNull();
+    expect(cleaned!.querySelector('.v4bSkd')).toBeNull();
+    expect(cleaned!.querySelector('p')?.textContent).toBe('Content.');
+  });
+
+  it('removes .DBd2Wb (footer container)', () => {
+    const root = parseHtml(
+      '<div><p>Content.</p><div class="DBd2Wb"><button>Copy</button><button>More</button></div></div>'
+    );
+    const cleaned = cleanForMarkdown(root);
+    expect(cleaned).not.toBeNull();
+    expect(cleaned!.querySelector('.DBd2Wb')).toBeNull();
   });
 
   it('returns null for null input', () => {
@@ -154,6 +185,27 @@ describe('toMarkdown', () => {
     const root = parseHtml('<div></div>');
     const md = toMarkdown(root);
     expect(md.trim()).toBe('');
+  });
+});
+
+describe('toMarkdownAssistantOnly', () => {
+  it('returns only assistant body without user query', () => {
+    const root = parseHtml(
+      '<div data-container-id="main-col">' +
+        '<span class="VndcI veK2kb">the query</span>' +
+        '<p>Some <strong>bold</strong> text.</p>' +
+        '</div>'
+    );
+    const md = toMarkdownAssistantOnly(root);
+    expect(md).toContain('### Assistant');
+    expect(md).not.toContain('### User');
+    expect(md).not.toContain('the query');
+    expect(md).toContain('**bold**');
+  });
+
+  it('returns empty string for empty root', () => {
+    const root = parseHtml('<div></div>');
+    expect(toMarkdownAssistantOnly(root).trim()).toBe('');
   });
 });
 
