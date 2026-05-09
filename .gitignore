@@ -1,9 +1,8 @@
 # Dependencies
 node_modules/
 
-# Build output
+# Build output (complete unpacked extension — load this folder in Chrome)
 dist/
-popup/popup.js
 
 # OS
 .DS_Store

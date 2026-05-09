@@ -4,7 +4,7 @@
   "description": "Chrome extension: export Google AI conversation to Markdown",
   "private": true,
   "scripts": {
-    "build": "node scripts/sync-version.js && esbuild content/content.ts --bundle --outfile=dist/content.js && esbuild popup/popup.ts --bundle --outfile=popup/popup.js",
+    "build": "node scripts/build-extension.js",
     "ci": "npm run typecheck && npm run lint && npm run test && npm run build",
     "icons:generate": "node scripts/generate-icons.js",
     "prepack": "npm run build",
@@ -22,7 +22,7 @@
     "@types/chrome": "^0.0.268",
     "@types/jsdom": "^27.0.0",
     "@types/turndown": "^5.0.6",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.28.0",
     "eslint": "^10.0.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.3.0",
